@@ -1,5 +1,4 @@
 {
-  "outputDirectory": "Public",
   "functions": {
     "api/rates.js": {
       "maxDuration": 30
