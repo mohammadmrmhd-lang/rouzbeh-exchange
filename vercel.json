@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/rates.js": {
+      "maxDuration": 60
+    }
+  }
+}

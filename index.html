@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROUZBEH Exchange · Oxford</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c9a84c;
+    --gold-dim: rgba(201,168,76,0.15);
+    --gold-border: rgba(201,168,76,0.2);
+    --bg: #06080f;
+    --bg2: rgba(255,255,255,0.025);
+    --border: rgba(255,255,255,0.07);
+    --text: #dde2ee;
+    --muted: rgba(255,255,255,0.3);
+    --green: #50b978;
+    --red: #e05858;
+  }
+
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 480px;
+    background: #0b0e1a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .accent-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* HEADER */
+  .header {
+    padding: 24px 22px 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand { display: flex; flex-direction: column; gap: 3px; }
+
+  .brand-row { display: flex; align-items: center; gap: 10px; }
+
+  .emblem {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--gold-border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .emblem svg { width: 20px; height: 20px; }
+
+  .name-en {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .name-en span { color: var(--gold); }
+
+  .name-fa {
+    font-size: 11px;
+    color: rgba(201,168,76,0.55);
+    padding-right: 46px;
+  }
+
+  .location {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: 2px;
+    padding-right: 46px;
+    margin-top: 1px;
+  }
+
+  .live-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold-border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .live-pill:hover { background: rgba(201,168,76,0.22); }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* HERO */
+  .hero {
+    padding: 20px 22px 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: rgba(201,168,76,0.5);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .hero-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 54px;
+    letter-spacing: 2px;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .hero-unit {
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+
+  .hero-tag.up   { background: rgba(80,185,120,0.1); color: var(--green); }
+  .hero-tag.down { background: rgba(220,80,80,0.1);  color: var(--red);   }
+  .hero-tag.flat { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin: 0 22px;
+  }
+
+  .tab {
+    padding: 11px 18px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .tab:hover { color: rgba(255,255,255,0.6); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .rate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px 22px;
+  }
+
+  .rate-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .rate-card:hover { border-color: var(--gold-border); }
+
+  .rate-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.22);
+    margin-bottom: 8px;
+  }
+
+  .rate-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .rate-val.buy  { color: var(--green); }
+  .rate-val.sell { color: var(--red);   }
+
+  .rate-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.18);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* SOURCES */
+  .sources-wrap { padding: 0 22px 10px; }
+
+  .section-hd {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.15);
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .col-hdr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+
+  .col-hdr-spacer { width: 6px; flex-shrink: 0; }
+  .col-hdr-name   { flex: 1; }
+  .col-hdr-val {
+    min-width: 58px;
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.14);
+  }
+
+  .src-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .src-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .src-dot.ok      { background: var(--green); }
+  .src-dot.loading { background: var(--gold); animation: pulse 1.2s infinite; }
+  .src-dot.err     { background: var(--red); }
+
+  .src-name {
+    flex: 1;
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .src-vals { display: flex; gap: 10px; font-family: 'DM Mono', monospace; font-size: 10px; }
+  .src-b { color: var(--green); min-width: 58px; text-align: right; }
+  .src-s { color: var(--red);   min-width: 58px; text-align: right; }
+
+  /* FOOTER */
+  .footer {
+    padding: 10px 22px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .footer-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.13);
+    letter-spacing: 1px;
+  }
+
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold-border);
+    color: var(--gold);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.2s;
+  }
+
+  .refresh-btn:hover { background: rgba(201,168,76,0.22); }
+  .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .spin { display: inline-block; }
+  .spinning { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* OVERLAY */
+  .overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(6,8,15,0.9);
+    z-index: 20;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    border-radius: 20px;
+  }
+
+  .overlay.show { display: flex; }
+
+  .ov-dots { display: flex; gap: 6px; }
+  .ov-dots span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gold);
+    animation: bdot 1.2s infinite;
+  }
+  .ov-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .ov-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bdot { 0%,80%,100%{opacity:0.3;transform:translateY(0)} 40%{opacity:1;transform:translateY(-6px)} }
+
+  .ov-msg {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(201,168,76,0.5);
+    letter-spacing: 1px;
+    text-align: center;
+    max-width: 260px;
+    padding: 0 20px;
+  }
+
+  @media (max-width: 500px) {
+    .hero-num { font-size: 42px; }
+    .name-en  { font-size: 17px; }
+    .rate-val { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="mainCard">
+  <div class="accent-line"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="ov-dots"><span></span><span></span><span></span></div>
+    <div class="ov-msg" id="ovMsg">در حال دریافت نرخ‌ها...</div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-row">
+        <div class="emblem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.4">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 3"/>
+            <path d="M7.5 12h9" stroke-width="0.7" opacity="0.35"/>
+          </svg>
+        </div>
+        <div class="name-en">ROUZBEH <span>Exchange</span></div>
+      </div>
+      <div class="name-fa">صرافی روزبه · تخصصی خرید و فروش پوند</div>
+      <div class="location">Oxford · United Kingdom</div>
+    </div>
+    <div class="live-pill" onclick="fetchRates()">
+      <span class="live-dot"></span>
+      LIVE
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">GBP · میانگین بازار · تومان</div>
+    <div class="hero-num" id="heroNum">—<span class="hero-unit">تومان</span></div>
+    <div class="hero-tag flat" id="heroTag">در انتظار داده...</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('hv')">حواله / انتقال</div>
+    <div class="tab"        onclick="switchTab('nq')">نقدی</div>
+  </div>
+
+  <!-- PANEL: HAVALEH -->
+  <div class="panel active" id="panelHv">
+    <div class="rate-grid">
+      <div class="rate-card">
+        <div class="rate-label">خرید حواله</div>
+        <div class="rate-val buy" id="hvBuy">—</div>
+        <div class="rate-sub">میانگین · تومان</div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-label">فروش حواله</div>
+        <div class="rate-val sell" id="hvSell">—</div>
+        <div class="rate-sub">میانگین · تومان</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: NAQDI -->
+  <div class="panel" id="panelNq">
+    <div class="rate-grid">
+      <div class="rate-card">
+        <div class="rate-label">خرید نقدی</div>
+        <div class="rate-val buy" id="nqBuy">—</div>
+        <div class="rate-sub">میانگین · تومان</div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-label">فروش نقدی</div>
+        <div class="rate-val sell" id="nqSell">—</div>
+        <div class="rate-sub">میانگین · تومان</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOURCES -->
+  <div class="sources-wrap">
+    <div class="section-hd">
+      <span>منابع · SOURCES</span>
+      <span id="srcCount">۰/۵</span>
+    </div>
+    <div class="col-hdr">
+      <div class="col-hdr-spacer"></div>
+      <div class="col-hdr-name"></div>
+      <div class="col-hdr-val">خرید</div>
+      <div class="col-hdr-val">فروش</div>
+    </div>
+    <div id="srcList"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-time" id="footerTime">LAST UPDATE: —</div>
+    <button class="refresh-btn" id="refreshBtn" onclick="fetchRates()">
+      <span class="spin" id="refreshIcon">↻</span> REFRESH
+    </button>
+  </div>
+</div>
+
+<script>
+  let state = [];
+  let prevAvg = null;
+
+  function n(v) {
+    if (!v || isNaN(v)) return '—';
+    return Math.round(v).toLocaleString('en-US');
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((el, i) => {
+      el.classList.toggle('active', (i === 0 && tab === 'hv') || (i === 1 && tab === 'nq'));
+    });
+    document.getElementById('panelHv').classList.toggle('active', tab === 'hv');
+    document.getElementById('panelNq').classList.toggle('active', tab === 'nq');
+  }
+
+  function renderSources() {
+    const el = document.getElementById('srcList');
+    el.innerHTML = state.map(s => `
+      <div class="src-item">
+        <div class="src-dot ${s.status}"></div>
+        <div class="src-name">${s.name}</div>
+        <div class="src-vals">
+          <div class="src-b">${n(s.hvBuy || s.nqBuy)}</div>
+          <div class="src-s">${n(s.hvSell || s.nqSell)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    const ok = state.filter(s => s.status === 'ok').length;
+    document.getElementById('srcCount').textContent = ok + '/' + state.length;
+  }
+
+  function updateHero(summary) {
+    document.getElementById('hvBuy').textContent  = n(summary.avgHvBuy);
+    document.getElementById('hvSell').textContent = n(summary.avgHvSell);
+    document.getElementById('nqBuy').textContent  = n(summary.avgNqBuy);
+    document.getElementById('nqSell').textContent = n(summary.avgNqSell);
+
+    const all = [summary.avgHvBuy, summary.avgHvSell, summary.avgNqBuy, summary.avgNqSell].filter(Boolean);
+    if (!all.length) return;
+
+    const avg = Math.round(all.reduce((a, b) => a + b, 0) / all.length);
+    document.getElementById('heroNum').innerHTML = n(avg) + '<span class="hero-unit">تومان</span>';
+
+    const tag = document.getElementById('heroTag');
+    if (prevAvg) {
+      const diff = avg - prevAvg;
+      if (diff > 0) {
+        tag.className = 'hero-tag up';
+        tag.textContent = '▲ ' + n(diff) + ' تومان';
+      } else if (diff < 0) {
+        tag.className = 'hero-tag down';
+        tag.textContent = '▼ ' + n(Math.abs(diff)) + ' تومان';
+      } else {
+        tag.className = 'hero-tag flat';
+        tag.textContent = 'بدون تغییر';
+      }
+    } else {
+      tag.className = 'hero-tag flat';
+      tag.textContent = summary.sourcesOk + ' منبع فعال · میانگین لحظه‌ای';
+    }
+    prevAvg = avg;
+
+    const t = new Date(summary.updatedAt);
+    document.getElementById('footerTime').textContent =
+      'LAST UPDATE: ' + t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  async function fetchRates() {
+    const btn  = document.getElementById('refreshBtn');
+    const icon = document.getElementById('refreshIcon');
+    const ov   = document.getElementById('overlay');
+
+    btn.disabled = true;
+    icon.classList.add('spinning');
+    ov.classList.add('show');
+    document.getElementById('ovMsg').textContent = 'در حال دریافت نرخ‌ها از منابع...';
+
+    try {
+      const res  = await fetch('/api/rates');
+      const data = await res.json();
+
+      state = data.sources || [];
+      renderSources();
+      if (data.summary) updateHero(data.summary);
+    } catch (err) {
+      document.getElementById('ovMsg').textContent = 'خطا در دریافت — دوباره تلاش کنید';
+      setTimeout(() => ov.classList.remove('show'), 2000);
+    } finally {
+      ov.classList.remove('show');
+      btn.disabled = false;
+      icon.classList.remove('spinning');
+    }
+  }
+
+  fetchRates();
+  setInterval(fetchRates, 15 * 60 * 1000);
+</script>
+</body>
+</html>
