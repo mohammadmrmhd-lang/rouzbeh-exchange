@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/rates.js": {
-      "maxDuration": 60
+      "maxDuration": 30
     }
   }
 }

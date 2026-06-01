@@ -1,89 +1,171 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate');
 
-  const SOURCES = [
-    { name: 'pmex.uk (parsomash)', url: 'https://pmex.uk/fa' },
-    { name: 'javanexchange.com', url: 'https://javanexchange.com/' },
-    { name: 'sarafi.london', url: 'https://www.sarafi.london/' },
-    { name: 'sarafi.uk', url: 'https://sarafi.uk/pound' },
-    { name: 'kchange.co.uk (karimaghaei)', url: 'https://kchange.co.uk/' },
-  ];
+  const results = [];
 
-  async function fetchSource(source) {
-    const prompt = `You are a precise data extractor. Search the web for current GBP to Iranian Toman exchange rates from this specific source: ${source.url}
-
-Extract GBP (British Pound) rates to Iranian Toman (تومان).
-Look for BOTH:
-1. "حواله" or "حساب به حساب" (wire transfer) rates
-2. "نقدی" or "نقد" (cash) rates
-
-Return ONLY valid JSON, no explanation, no markdown:
-{"havaleh_buy": NUMBER_OR_NULL, "havaleh_sell": NUMBER_OR_NULL, "naqdi_buy": NUMBER_OR_NULL, "naqdi_sell": NUMBER_OR_NULL}
-
-Rules:
-- Numbers must be in Toman (e.g. 213000 not 213,000)
-- If only one rate type exists, fill the other with null
-- If a field shows "Call" or is missing, use null
-- Never guess — only return confirmed numbers from this source`;
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'interleaved-thinking-2025-05-14'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await response.json();
-    const texts = (data.content || [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('');
-
-    try {
-      const m = texts.match(/\{[\s\S]*?\}/);
-      if (m) {
-        const p = JSON.parse(m[0]);
-        return {
-          name: source.name,
-          status: 'ok',
-          hvBuy: p.havaleh_buy || null,
-          hvSell: p.havaleh_sell || null,
-          nqBuy: p.naqdi_buy || null,
-          nqSell: p.naqdi_sell || null,
-        };
-      }
-    } catch (e) {}
-
-    return { name: source.name, status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null };
-  }
-
+  // ─── 1. PMEX.UK ───────────────────────────────────────────────
   try {
-    const results = await Promise.all(SOURCES.map(fetchSource));
-    const ok = results.filter(r => r.status === 'ok');
-    const avg = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+    const r = await fetch('https://pmex.uk/fa', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bot/1.0)' },
+      signal: AbortSignal.timeout(8000)
+    });
+    const html = await r.text();
 
-    const summary = {
-      avgHvBuy: avg(ok.filter(r => r.hvBuy).map(r => r.hvBuy)),
-      avgHvSell: avg(ok.filter(r => r.hvSell).map(r => r.hvSell)),
-      avgNqBuy: avg(ok.filter(r => r.nqBuy).map(r => r.nqBuy)),
-      avgNqSell: avg(ok.filter(r => r.nqSell).map(r => r.nqSell)),
-      sourcesOk: ok.length,
-      sourcesTotal: SOURCES.length,
-      updatedAt: new Date().toISOString(),
-    };
+    // پوند حواله
+    const hvMatch = html.match(/پوند.*?حساب.*?حساب[\s\S]*?<td[^>]*>([\d,]+)<\/td>[\s\S]*?<td[^>]*>([\d,]+)<\/td>/i);
+    // پوند نقدی  
+    const nqMatch = html.match(/پوند.*?نقد[\s\S]*?<td[^>]*>([^<]+)<\/td>[\s\S]*?<td[^>]*>([^<]+)<\/td>/i);
 
-    res.status(200).json({ summary, sources: results });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    // روش ساده‌تر — همه اعداد بزرگ رو پیدا کن
+    const allNums = [...html.matchAll(/(\d{3},\d{3})/g)].map(m => parseInt(m[1].replace(',', '')));
+    const gbpNums = allNums.filter(n => n > 150000 && n < 400000);
+
+    let hvBuy = null, hvSell = null;
+    if (gbpNums.length >= 2) {
+      hvBuy  = Math.min(...gbpNums.slice(0, 4));
+      hvSell = Math.max(...gbpNums.slice(0, 4));
+    }
+
+    // دنبال نقدی بگرد
+    const naqdiSection = html.match(/نقد[یي][\s\S]{0,200}?([\d]{3},[\d]{3})[\s\S]{0,100}?([\d]{3},[\d]{3})/i);
+    let nqBuy = null, nqSell = null;
+    if (naqdiSection) {
+      const a = parseInt(naqdiSection[1].replace(',',''));
+      const b = parseInt(naqdiSection[2].replace(',',''));
+      if (a > 150000 && b > 150000) {
+        nqBuy  = Math.min(a, b);
+        nqSell = Math.max(a, b);
+      }
+    }
+
+    if (hvBuy && hvSell) {
+      results.push({ name: 'پارسوماش (pmex.uk)', status: 'ok', hvBuy, hvSell, nqBuy, nqSell });
+    } else {
+      results.push({ name: 'پارسوماش (pmex.uk)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+    }
+  } catch (e) {
+    results.push({ name: 'پارسوماش (pmex.uk)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
   }
+
+  // ─── 2. SARAFI FAGHANI ────────────────────────────────────────
+  try {
+    const r = await fetch('https://sarafifaghani.com', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(8000)
+    });
+    const html = await r.text();
+    const nums = [...html.matchAll(/(\d{3},\d{3})/g)]
+      .map(m => parseInt(m[1].replace(',', '')))
+      .filter(n => n > 150000 && n < 400000);
+
+    if (nums.length >= 2) {
+      results.push({
+        name: 'صرافی فغانی (sarafifaghani)',
+        status: 'ok',
+        hvBuy: Math.min(...nums.slice(0,4)),
+        hvSell: Math.max(...nums.slice(0,4)),
+        nqBuy: null, nqSell: null
+      });
+    } else {
+      results.push({ name: 'صرافی فغانی (sarafifaghani)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+    }
+  } catch (e) {
+    results.push({ name: 'صرافی فغانی (sarafifaghani)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+  }
+
+  // ─── 3. KCHANGE (KARIMAGHAEI) ─────────────────────────────────
+  try {
+    const r = await fetch('https://kchange.co.uk/exchange-rates/', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(8000)
+    });
+    const html = await r.text();
+    // kchange GBP/IRR یا GBP به تومان
+    const nums = [...html.matchAll(/(\d{3},\d{3})/g)]
+      .map(m => parseInt(m[1].replace(',', '')))
+      .filter(n => n > 150000 && n < 400000);
+
+    if (nums.length >= 2) {
+      results.push({
+        name: 'کریم آقایی (kchange.co.uk)',
+        status: 'ok',
+        hvBuy: Math.min(...nums.slice(0,4)),
+        hvSell: Math.max(...nums.slice(0,4)),
+        nqBuy: null, nqSell: null
+      });
+    } else {
+      results.push({ name: 'کریم آقایی (kchange.co.uk)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+    }
+  } catch (e) {
+    results.push({ name: 'کریم آقایی (kchange.co.uk)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+  }
+
+  // ─── 4. SARAFI.UK ─────────────────────────────────────────────
+  try {
+    const r = await fetch('https://sarafi.uk/pound', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(8000)
+    });
+    const html = await r.text();
+    const nums = [...html.matchAll(/(\d{3},\d{3})/g)]
+      .map(m => parseInt(m[1].replace(',', '')))
+      .filter(n => n > 150000 && n < 400000);
+
+    if (nums.length >= 2) {
+      results.push({
+        name: 'صرافی انگلستان (sarafi.uk)',
+        status: 'ok',
+        hvBuy: Math.min(...nums.slice(0,4)),
+        hvSell: Math.max(...nums.slice(0,4)),
+        nqBuy: null, nqSell: null
+      });
+    } else {
+      results.push({ name: 'صرافی انگلستان (sarafi.uk)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+    }
+  } catch (e) {
+    results.push({ name: 'صرافی انگلستان (sarafi.uk)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+  }
+
+  // ─── 5. SARAFI LONDON ─────────────────────────────────────────
+  try {
+    const r = await fetch('https://www.sarafi.london/', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(8000)
+    });
+    const html = await r.text();
+    const nums = [...html.matchAll(/(\d{3},\d{3})/g)]
+      .map(m => parseInt(m[1].replace(',', '')))
+      .filter(n => n > 150000 && n < 400000);
+
+    if (nums.length >= 2) {
+      results.push({
+        name: 'صرافی برتر لندن (sarafi.london)',
+        status: 'ok',
+        hvBuy: Math.min(...nums.slice(0,4)),
+        hvSell: Math.max(...nums.slice(0,4)),
+        nqBuy: null, nqSell: null
+      });
+    } else {
+      results.push({ name: 'صرافی برتر لندن (sarafi.london)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+    }
+  } catch (e) {
+    results.push({ name: 'صرافی برتر لندن (sarafi.london)', status: 'err', hvBuy: null, hvSell: null, nqBuy: null, nqSell: null });
+  }
+
+  // ─── SUMMARY ──────────────────────────────────────────────────
+  const ok = results.filter(r => r.status === 'ok');
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b) => a+b, 0) / arr.length) : null;
+
+  const summary = {
+    avgHvBuy:  avg(ok.filter(r => r.hvBuy).map(r => r.hvBuy)),
+    avgHvSell: avg(ok.filter(r => r.hvSell).map(r => r.hvSell)),
+    avgNqBuy:  avg(ok.filter(r => r.nqBuy).map(r => r.nqBuy)),
+    avgNqSell: avg(ok.filter(r => r.nqSell).map(r => r.nqSell)),
+    sourcesOk: ok.length,
+    sourcesTotal: results.length,
+    updatedAt: new Date().toISOString(),
+  };
+
+  res.status(200).json({ summary, sources: results });
 }
